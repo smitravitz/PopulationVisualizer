@@ -6,9 +6,6 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python fetch_world_population.py"
     schedule: "0 1 * * *"
-    envVars:
-      - key: PYTHONUNBUFFERED
-        value: "true"
 
   - type: web
     name: population-api
@@ -16,9 +13,6 @@ services:
     plan: free
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python api_server.py"
-    envVars:
-      - key: PYTHONUNBUFFERED
-        value: "true"
 
   - type: static
     name: population-chart
