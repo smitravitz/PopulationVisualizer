@@ -81,12 +81,7 @@
           },
           tooltip: {
             callbacks: {
-              label: (ctx) => ctx.dataset.data[ctx.dataIndex].toLocaleString(),
-              title: (ctx) => {
-                const country = ctx[0].label;
-                const code = getFlagCode(country);
-                return `${country}  ${code ? '🇺🇳' : ''}`;
-              }
+              label: (ctx) => ctx.dataset.data[ctx.dataIndex].toLocaleString()
             }
           }
         },
@@ -104,12 +99,12 @@
       }
     });
 
-    function getFlagCode(country) {
-      // Fallbacks can be improved with ISO mapping if needed
-      return country.slice(0, 2).toUpperCase();
-    }
-
     function updateChart(data) {
+      if (!data || !Array.isArray(data)) {
+        console.error("Invalid data format:", data);
+        alert("Failed to load population data (invalid format).");
+        return;
+      }
       chart.data.labels = data.map(d => d.country);
       chart.data.datasets = [{
         label: "Population",
@@ -136,12 +131,19 @@
     }
 
     fetch(API_URL)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
       .then(data => {
+        console.log("Fetched population data:", data);
         allData = data.sort((a, b) => b.population - a.population);
         updateChart(allData);
       })
-      .catch(err => alert("Failed to load population data."));
+      .catch(err => {
+        console.error("Fetch error:", err);
+        alert("Failed to fetch population data. See console for details.");
+      });
   </script>
 </body>
 </html>
