@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>World Population Visualization</title>
+  <title>World Population Chart</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
@@ -16,12 +16,12 @@
       transition: background 0.3s, color 0.3s;
     }
     :root {
-      --bg: #fff;
-      --text: #000;
+      --bg: #ffffff;
+      --text: #000000;
     }
     .dark {
       --bg: #121212;
-      --text: #eee;
+      --text: #f0f0f0;
     }
     header {
       padding: 1rem;
@@ -46,14 +46,13 @@
 <body>
   <header>
     <div>
-      <label for="continent">Continent: </label>
-      <select id="continent">
+      <label for="region">Region: </label>
+      <select id="region">
         <option value="All">All</option>
         <option value="Africa">Africa</option>
+        <option value="Americas">Americas</option>
         <option value="Asia">Asia</option>
         <option value="Europe">Europe</option>
-        <option value="North America">North America</option>
-        <option value="South America">South America</option>
         <option value="Oceania">Oceania</option>
       </select>
     </div>
@@ -77,11 +76,26 @@
         plugins: {
           title: {
             display: true,
-            text: 'World Population by Country (2025)'
+            text: 'World Population by Country'
           },
           tooltip: {
             callbacks: {
-              label: (ctx) => ctx.dataset.data[ctx.dataIndex].toLocaleString()
+              label: function(ctx) {
+                const d = allData[ctx.dataIndex];
+                return [
+                  "Capital: " + d.capital,
+                  "Region: " + d.region,
+                  "Population: " + d.population.toLocaleString()
+                ];
+              },
+              title: function(ctx) {
+                const d = allData[ctx[0].dataIndex];
+                return d.country;
+              },
+              afterBody: function(ctx) {
+                const d = allData[ctx[0].dataIndex];
+                return d.flag ? "🌐 Flag: " + d.flag : "";
+              }
             }
           }
         },
@@ -100,11 +114,6 @@
     });
 
     function updateChart(data) {
-      if (!data || !Array.isArray(data)) {
-        console.error("Invalid data format:", data);
-        alert("Failed to load population data (invalid format).");
-        return;
-      }
       chart.data.labels = data.map(d => d.country);
       chart.data.datasets = [{
         label: "Population",
@@ -116,13 +125,13 @@
       chart.update();
     }
 
-    function filterByContinent(continent) {
-      if (continent === "All") return allData;
-      return allData.filter(d => d.continent === continent);
+    function filterByRegion(region) {
+      if (region === "All") return allData;
+      return allData.filter(d => d.region === region);
     }
 
-    document.getElementById("continent").addEventListener("change", (e) => {
-      const filtered = filterByContinent(e.target.value);
+    document.getElementById("region").addEventListener("change", (e) => {
+      const filtered = filterByRegion(e.target.value);
       updateChart(filtered);
     });
 
@@ -131,18 +140,15 @@
     }
 
     fetch(API_URL)
-      .then(res => {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
-        console.log("Fetched population data:", data);
-        allData = data.sort((a, b) => b.population - a.population);
+        allData = data.filter(d => d.country && d.population > 0);
+        allData.sort((a, b) => b.population - a.population);
         updateChart(allData);
       })
       .catch(err => {
         console.error("Fetch error:", err);
-        alert("Failed to fetch population data. See console for details.");
+        alert("Failed to load population data.");
       });
   </script>
 </body>
